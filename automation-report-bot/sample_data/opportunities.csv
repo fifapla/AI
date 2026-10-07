@@ -1,0 +1,16 @@
+date,client,channel,category,offer_price,status
+2026-09-20,Acme Trading Co,platform,ai_training,30,replied
+2026-09-20,Gulf Retail LLC,direct,writing,45,sent
+2026-09-21,Nova Clinic,platform,chatbot,120,won
+2026-09-21,Desert Rose Restaurant,platform,chatbot,90,won
+2026-09-22,Falcon Logistics,direct,automation,200,sent
+2026-09-22,BrightPath Media,platform,translation,35,rejected
+2026-09-23,Sandstone HR,direct,ai_training,25,replied
+2026-09-23,Oryx Consulting,platform,writing,40,sent
+2026-09-24,Palm Tech Solutions,direct,automation,180,won
+2026-09-24,Crescent Media,platform,translation,30,rejected
+2026-09-25,Dune Analytics,platform,ai_training,28,replied
+2026-09-25,Marina Hospitality,direct,chatbot,100,sent
+2026-09-26,Zafir Studios,platform,writing,38,rejected
+2026-09-26,Khaleej Insights,direct,automation,220,won
+2026-09-27,Pearl Trading,platform,ai_training,32,replied

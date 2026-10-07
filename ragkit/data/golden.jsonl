@@ -1,0 +1,10 @@
+{"question": "How many days do I have to return an item?", "expected_source": "returns_en.md"}
+{"question": "Are digital products refundable?", "expected_source": "returns_en.md"}
+{"question": "When is express shipping free?", "expected_source": "shipping_en.md"}
+{"question": "Which countries do you ship to?", "expected_source": "shipping_en.md"}
+{"question": "What are the support working hours?", "expected_source": "support_en.md"}
+{"question": "Do you sell my personal data?", "expected_source": "privacy_en.md"}
+{"question": "كم يوم عندي لإرجاع المنتج؟", "expected_source": "returns_ar.md"}
+{"question": "متى يكون الشحن السريع مجاني؟", "expected_source": "shipping_ar.md"}
+{"question": "ما طرق الدفع المتاحة؟", "expected_source": "payment_ar.md"}
+{"question": "هل تخزنون بيانات البطاقة؟", "expected_source": "payment_ar.md"}

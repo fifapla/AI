@@ -1,0 +1,27 @@
+name: support_triage
+min_confidence: 0.6
+retries: 3
+default_route: triage_queue
+# first matching rule wins - order = priority
+rules:
+  - label: security
+    any: ["hacked", "unauthori[sz]ed", "data breach", "اختراق", "حسابي مسروق"]
+  - label: billing
+    any: ["refund", "invoice", "charge[d]?", "payment", "استرجاع", "فاتورة", "خصم"]
+  - label: technical
+    any: ["error", "crash", "bug", "not working", "can't log ?in", "لا يعمل", "مشكلة تقنية"]
+  - label: sales
+    any: ["pricing", "quote", "demo", "enterprise plan", "سعر", "عرض سعر"]
+extract:
+  order_id: "(?:order|طلب)\\s*#?\\s*(\\d{4,})"
+  amount: "(?:\\$|usd\\s*)(\\d+(?:\\.\\d+)?)"
+  email: "([\\w.+-]+@[\\w-]+\\.[\\w.]+)"
+routes:
+  security: {action: security_queue}
+  billing: {action: billing_queue}
+  technical: {action: tech_queue}
+  sales: {action: sales_queue}
+# high-risk work waits for a human
+require_approval_when:
+  labels: [security]
+  amount_over: 500

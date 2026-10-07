@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>مساعد خدمة العملاء - الشركة</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #EEF1F5;
+    --panel: #FFFFFF;
+    --ink: #16202E;
+    --ink-soft: #5D6B7E;
+    --primary: #1B3A5C;
+    --primary-deep: #0F2438;
+    --accent: #3D8BD4;
+    --bubble-user: #1B3A5C;
+    --bubble-user-text: #FFFFFF;
+    --bubble-bot: #EAF0F7;
+    --border: #DCE2EA;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    box-sizing: border-box;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0E1620; --panel: #141F2C; --ink: #E7EDF5; --ink-soft: #93A2B6;
+      --primary: #5B9BD9; --primary-deep: #4785C4; --accent: #6AB6F0;
+      --bubble-user: #4785C4; --bubble-user-text: #061019; --bubble-bot: #1C2A3A; --border: #263346;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0E1620; --panel: #141F2C; --ink: #E7EDF5; --ink-soft: #93A2B6;
+    --primary: #5B9BD9; --primary-deep: #4785C4; --accent: #6AB6F0;
+    --bubble-user: #4785C4; --bubble-user-text: #061019; --bubble-bot: #1C2A3A; --border: #263346;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    height: 100%; margin: 0; background: var(--bg); color: var(--ink);
+    font-family: 'IBM Plex Sans Arabic', system-ui, sans-serif;
+    scroll-padding-top: env(safe-area-inset-top, 0px);
+  }
+  .wrap { max-width: 480px; margin: 0 auto; height: 100%; display: flex; flex-direction: column; padding: 16px; }
+  header {
+    display: flex; align-items: center; gap: 12px; padding: 15px 16px;
+    background: var(--panel); border: 1px solid var(--border); border-radius: 14px 14px 0 0;
+  }
+  .logo {
+    width: 40px; height: 40px; border-radius: 8px;
+    background: var(--primary); display: flex; align-items: center; justify-content: center;
+    color: var(--accent); font-weight: 800; font-size: 15px; flex-shrink: 0;
+  }
+  header .title { font-weight: 700; font-size: 15.5px; }
+  header .subtitle { font-size: 12px; color: var(--ink-soft); margin-top: 2px; }
+  .status-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); display: inline-block; margin-inline-end: 5px; }
+
+  .chat { flex: 1; background: var(--panel); border-inline: 1px solid var(--border); overflow-y: auto; padding: 18px 16px; display: flex; flex-direction: column; gap: 10px; }
+  .row { display: flex; align-items: flex-end; gap: 8px; }
+  .row.user { flex-direction: row-reverse; }
+  .avatar { width: 26px; height: 26px; border-radius: 6px; flex-shrink: 0; background: var(--primary); color: var(--accent); font-size: 11px; display: flex; align-items: center; justify-content: center; }
+  .msg { max-width: 78%; padding: 11px 14px; border-radius: 12px; font-size: 14.5px; line-height: 1.6; box-shadow: 0 1px 2px rgba(0,0,0,.05); }
+  .msg.bot { background: var(--bubble-bot); border-bottom-right-radius: 3px; }
+  .msg.user { background: var(--bubble-user); color: var(--bubble-user-text); border-bottom-left-radius: 3px; }
+  .typing { display: flex; gap: 4px; padding: 4px 2px; }
+  .typing span { width: 6px; height: 6px; border-radius: 50%; background: var(--ink-soft); animation: blink 1.2s infinite ease-in-out; }
+  .typing span:nth-child(2) { animation-delay: .2s; }
+  .typing span:nth-child(3) { animation-delay: .4s; }
+  @keyframes blink { 0%, 80%, 100% { opacity: .25; } 40% { opacity: 1; } }
+
+  .suggestions { display: flex; flex-wrap: wrap; gap: 8px; padding: 12px 16px; background: var(--panel); border-inline: 1px solid var(--border); }
+  .chip { font-size: 12.5px; padding: 7px 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--ink); cursor: pointer; }
+  .chip:hover { border-color: var(--accent); }
+
+  form { display: flex; gap: 8px; padding: 12px; background: var(--panel); border: 1px solid var(--border); border-radius: 0 0 14px 14px; }
+  input[type=text] { flex: 1; border: 1px solid var(--border); background: var(--bg); color: var(--ink); border-radius: 10px; padding: 12px 14px; font-size: 14.5px; font-family: inherit; }
+  input[type=text]:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+  button.send { background: var(--primary); color: var(--bubble-user-text); border: none; border-radius: 10px; padding: 0 18px; font-weight: 600; font-size: 14px; cursor: pointer; font-family: inherit; }
+  button.send:active { background: var(--primary-deep); }
+
+  .footnote { text-align: center; font-size: 11px; color: var(--ink-soft); padding: 10px 4px 2px; }
+  .footnote b { color: var(--accent); }
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="logo">شركة</div>
+    <div>
+      <div class="title">مساعد خدمة العملاء</div>
+      <div class="subtitle"><span class="status-dot"></span>متصل الآن</div>
+    </div>
+  </header>
+
+  <div class="chat" id="chat"></div>
+  <div class="suggestions" id="suggestions"></div>
+
+  <form id="form">
+    <input type="text" id="input" placeholder="اسأل عن خدماتنا، الأسعار، أو الدعم الفني..." autocomplete="off">
+    <button class="send" type="submit">إرسال</button>
+  </form>
+
+  <div class="footnote">نموذج تجريبي · <b>هذا ديمو</b> يعمل من قاعدة معرفة ثابتة</div>
+</div>
+
+<script>
+const KB = [
+  { keys: ["خدمات","بتقدموا ايه","الخدمات"], a: "بنقدم استشارات تقنية، تطوير حلول مخصصة، ودعم فني مستمر لعملائنا في القطاع الخاص والحكومي." },
+  { keys: ["سعر","اسعار","تكلفة","عرض سعر"], a: "الأسعار بتختلف حسب حجم المشروع ومتطلباته. تحب توضحلي احتياجك عشان أجهزلك عرض سعر أولي؟" },
+  { keys: ["دعم فني","مشكلة","عطل","مش شغال"], a: "تقدر تفتح تذكرة دعم فني وهيتم الرد عليك خلال ٢٤ ساعة عمل. تحب تشرحلي المشكلة بالتفصيل؟" },
+  { keys: ["اتواصل","تواصل","ايميل","رقم"], a: "تقدر تتواصل معانا عن طريق البريد الرسمي أو الخط الساخن الموجود في صفحة اتصل بنا." },
+  { keys: ["مواعيد العمل","الدوام","شغالين"], a: "فريقنا شغال من الأحد للخميس، ٩ صباحًا لحد ٥ مساءً بتوقيت المنطقة." },
+  { keys: ["عرض تجريبي","ديمو","تجربة"], a: "أكيد، نقدر نرتب عرض تجريبي مجاني مع فريق المبيعات. تحب تحدد يوم ووقت مناسب؟" },
+  { keys: ["شراكة","تعاون","توريد"], a: "بنرحب بفرص الشراكة والتوريد. ابعتلي تفاصيل شركتك ونوع التعاون المقترح وهنتواصل معاك." },
+];
+const FALLBACK = "مش متأكد إني فاهم سؤالك بالظبط. تقدر تسأل عن خدماتنا، الأسعار، الدعم الفني، أو طرق التواصل.";
+const GREETING = "أهلًا بيك 👋 أنا مساعد خدمة العملاء. أقدر أساعدك بمعلومات عن خدماتنا، الأسعار، أو الدعم الفني.";
+const SUGGESTIONS = ["إيه الخدمات اللي بتقدموها؟", "عايز عرض سعر", "عندي مشكلة تقنية", "عايز أحجز عرض تجريبي"];
+
+const chat = document.getElementById('chat');
+const form = document.getElementById('form');
+const input = document.getElementById('input');
+const suggBox = document.getElementById('suggestions');
+
+function addMsg(text, who) {
+  const row = document.createElement('div');
+  row.className = 'row ' + who;
+  const av = document.createElement('div');
+  av.className = 'avatar'; av.textContent = who === 'bot' ? 'ش' : 'أ';
+  const el = document.createElement('div');
+  el.className = 'msg ' + who;
+  el.textContent = text;
+  row.appendChild(av); row.appendChild(el);
+  chat.appendChild(row);
+  chat.scrollTop = chat.scrollHeight;
+}
+function showTyping() {
+  const row = document.createElement('div');
+  row.className = 'row bot'; row.id = 'typingRow';
+  const av = document.createElement('div');
+  av.className = 'avatar'; av.textContent = 'ش';
+  const el = document.createElement('div');
+  el.className = 'msg bot typing';
+  el.innerHTML = '<span></span><span></span><span></span>';
+  row.appendChild(av); row.appendChild(el);
+  chat.appendChild(row);
+  chat.scrollTop = chat.scrollHeight;
+}
+function hideTyping() { const t = document.getElementById('typingRow'); if (t) t.remove(); }
+function findAnswer(q) {
+  for (const item of KB) { if (item.keys.some(k => q.includes(k))) return item.a; }
+  return FALLBACK;
+}
+function renderSuggestions(list) {
+  suggBox.innerHTML = '';
+  list.forEach(s => {
+    const c = document.createElement('div');
+    c.className = 'chip'; c.textContent = s;
+    c.onclick = () => { input.value = s; form.dispatchEvent(new Event('submit')); };
+    suggBox.appendChild(c);
+  });
+}
+form.addEventListener('submit', (e) => {
+  e.preventDefault();
+  const q = input.value.trim();
+  if (!q) return;
+  addMsg(q, 'user'); input.value = '';
+  showTyping();
+  setTimeout(() => { hideTyping(); addMsg(findAnswer(q), 'bot'); }, 650);
+});
+addMsg(GREETING, 'bot');
+renderSuggestions(SUGGESTIONS);
+</script>
+</body>
+</html>

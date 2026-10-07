@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>نظام RAG - مساعد استرجاع من المستندات</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #F3F4F6;
+    --panel: #FFFFFF;
+    --ink: #14171F;
+    --ink-soft: #626A79;
+    --primary: #4338CA;
+    --primary-deep: #332C9E;
+    --accent: #16A085;
+    --bubble-user: #4338CA;
+    --bubble-user-text: #FFFFFF;
+    --bubble-bot: #F0F0FA;
+    --border: #E2E4EA;
+    --source-bg: #ECFAF6;
+    --source-border: #B9E8DB;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    box-sizing: border-box;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0F1117; --panel: #171923; --ink: #E7E9F0; --ink-soft: #9298A8;
+      --primary: #8B85F0; --primary-deep: #6F68D8; --accent: #4FC9A8;
+      --bubble-user: #6F68D8; --bubble-user-text: #F4F3FF; --bubble-bot: #232538; --border: #2B2E3D;
+      --source-bg: #12291F; --source-border: #1F4636;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0F1117; --panel: #171923; --ink: #E7E9F0; --ink-soft: #9298A8;
+    --primary: #8B85F0; --primary-deep: #6F68D8; --accent: #4FC9A8;
+    --bubble-user: #6F68D8; --bubble-user-text: #F4F3FF; --bubble-bot: #232538; --border: #2B2E3D;
+    --source-bg: #12291F; --source-border: #1F4636;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    height: 100%; margin: 0; background: var(--bg); color: var(--ink);
+    font-family: 'IBM Plex Sans Arabic', system-ui, sans-serif;
+    scroll-padding-top: env(safe-area-inset-top, 0px);
+  }
+  .wrap { max-width: 520px; margin: 0 auto; height: 100%; display: flex; flex-direction: column; padding: 16px; }
+  header { padding: 16px; background: var(--panel); border: 1px solid var(--border); border-radius: 16px 16px 0 0; }
+  header .title { font-weight: 700; font-size: 15.5px; display: flex; align-items: center; gap: 8px; }
+  header .title .tag {
+    font-family: 'JetBrains Mono', monospace; font-size: 10.5px; padding: 3px 7px;
+    background: var(--primary); color: #fff; border-radius: 5px; letter-spacing: .3px;
+  }
+  header .subtitle { font-size: 12px; color: var(--ink-soft); margin-top: 5px; }
+  .kb-strip {
+    display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap;
+  }
+  .kb-chip {
+    font-size: 10.5px; padding: 4px 9px; border-radius: 999px; background: var(--bg);
+    border: 1px solid var(--border); color: var(--ink-soft); font-family: 'JetBrains Mono', monospace;
+  }
+
+  .chat { flex: 1; background: var(--panel); border-inline: 1px solid var(--border); overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+  .row { display: flex; align-items: flex-start; gap: 8px; }
+  .row.user { flex-direction: row-reverse; }
+  .avatar {
+    width: 26px; height: 26px; border-radius: 7px; flex-shrink: 0; margin-top: 2px;
+    background: var(--primary); color: #fff; font-size: 11px; font-family: 'JetBrains Mono', monospace;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .col { display: flex; flex-direction: column; gap: 6px; max-width: 80%; }
+  .msg { padding: 11px 14px; border-radius: 14px; font-size: 14.5px; line-height: 1.65; box-shadow: 0 1px 2px rgba(0,0,0,.05); }
+  .msg.bot { background: var(--bubble-bot); border-bottom-right-radius: 4px; }
+  .msg.user { background: var(--bubble-user); color: var(--bubble-user-text); border-bottom-left-radius: 4px; }
+
+  .source-card {
+    background: var(--source-bg); border: 1px solid var(--source-border); border-radius: 10px;
+    padding: 9px 12px; font-size: 12px; color: var(--ink-soft);
+  }
+  .source-card .label {
+    font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--accent);
+    font-weight: 600; margin-bottom: 4px; display: flex; align-items: center; gap: 5px;
+  }
+  .source-card .snippet { color: var(--ink); line-height: 1.55; }
+
+  .typing { display: flex; gap: 4px; padding: 4px 2px; }
+  .typing span { width: 6px; height: 6px; border-radius: 50%; background: var(--ink-soft); animation: blink 1.2s infinite ease-in-out; }
+  .typing span:nth-child(2) { animation-delay: .2s; }
+  .typing span:nth-child(3) { animation-delay: .4s; }
+  @keyframes blink { 0%, 80%, 100% { opacity: .25; } 40% { opacity: 1; } }
+
+  .suggestions { display: flex; flex-wrap: wrap; gap: 8px; padding: 12px 16px; background: var(--panel); border-inline: 1px solid var(--border); }
+  .chip { font-size: 12.5px; padding: 7px 12px; border-radius: 9px; border: 1px solid var(--border); background: var(--bg); color: var(--ink); cursor: pointer; }
+  .chip:hover { border-color: var(--primary); }
+
+  form { display: flex; gap: 8px; padding: 12px; background: var(--panel); border: 1px solid var(--border); border-radius: 0 0 16px 16px; }
+  input[type=text] { flex: 1; border: 1px solid var(--border); background: var(--bg); color: var(--ink); border-radius: 10px; padding: 12px 14px; font-size: 14.5px; font-family: inherit; }
+  input[type=text]:focus { outline: 2px solid var(--primary); outline-offset: 1px; }
+  button.send { background: var(--primary); color: #fff; border: none; border-radius: 10px; padding: 0 18px; font-weight: 600; font-size: 14px; cursor: pointer; font-family: inherit; }
+  button.send:active { background: var(--primary-deep); }
+
+  .footnote { text-align: center; font-size: 11px; color: var(--ink-soft); padding: 10px 4px 2px; line-height: 1.6; }
+  .footnote b { color: var(--accent); }
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="title"><span class="tag">RAG</span> مساعد استرجاع من المستندات</div>
+    <div class="subtitle">يجاوب فقط من مستندات الشركة المرفوعة، مع ذكر المصدر لكل إجابة</div>
+    <div class="kb-strip" id="kbStrip"></div>
+  </header>
+
+  <div class="chat" id="chat"></div>
+  <div class="suggestions" id="suggestions"></div>
+
+  <form id="form">
+    <input type="text" id="input" placeholder="اسأل عن أي سياسة أو إجراء داخلي..." autocomplete="off">
+    <button class="send" type="submit">إرسال</button>
+  </form>
+
+  <div class="footnote">نموذج تجريبي مبسّط لتوضيح آلية <b>الاسترجاع + التوليد (RAG)</b> — الإصدار الفعلي يُربط بقاعدة بيانات متجهية وملفاتكم الحقيقية</div>
+</div>
+
+<script>
+const DOCS = [
+  { id: "سياسة الإجازات", section: "القسم ٣.١", keys: ["اجازة","إجازة","اجازات","رصيد الاجازة"],
+    snippet: "يحق للموظف بدوام كامل ٢١ يوم إجازة سنوية مدفوعة، تُحتسب بعد إتمام ٣ أشهر من تاريخ التعيين.",
+    a: "حسب سياسة الإجازات، بتحصل على ٢١ يوم إجازة سنوية مدفوعة، وتبدأ تحتسبها بعد ٣ شهور من تاريخ التعيين." },
+  { id: "دليل الموظف", section: "القسم ٥.٢", keys: ["دوام","ساعات العمل","الحضور","المرونة"],
+    snippet: "ساعات العمل الرسمية من ٩ صباحًا حتى ٥ مساءً، مع نظام مرونة يسمح بالوصول خلال ساعة من الموعد الرسمي.",
+    a: "ساعات الدوام الرسمية ٩ لـ٥، وفيه نظام مرونة يسمحلك توصل خلال ساعة من الميعاد الرسمي." },
+  { id: "سياسة الإجازات", section: "القسم ٤.٣", keys: ["مرضية","إجازة مرضية","تعبان"],
+    snippet: "تُمنح إجازة مرضية بحد أقصى ١٤ يومًا سنويًا بموجب تقرير طبي معتمد من جهة رسمية.",
+    a: "الإجازة المرضية أقصى حد ليها ١٤ يوم في السنة، وشرطها تقرير طبي معتمد." },
+  { id: "دليل الموارد البشرية", section: "القسم ٢.١", keys: ["تأمين طبي","التأمين","التغطية الطبية"],
+    snippet: "يغطي التأمين الطبي الموظف وأسرته المباشرة (زوج/زوجة وحتى طفلين) بعد فترة تجربة ٩٠ يومًا.",
+    a: "التأمين الطبي بيغطيك إنت والأسرة المباشرة بعد ٩٠ يوم من بداية التعيين." },
+  { id: "سياسة العمل عن بُعد", section: "القسم ١.٤", keys: ["عن بعد","اورك من البيت","ريموت"],
+    snippet: "يُسمح بالعمل عن بُعد بحد أقصى يومين أسبوعيًا بموافقة المدير المباشر.",
+    a: "العمل عن بُعد متاح لحد يومين في الأسبوع، وبيحتاج موافقة المدير المباشر." },
+  { id: "دليل الموظف", section: "القسم ٧.٠", keys: ["استقالة","انهاء الخدمة","اشعار"],
+    snippet: "يتطلب تقديم الاستقالة إشعارًا مسبقًا مدته ٣٠ يومًا، أو حسب ما هو محدد في عقد العمل الفردي.",
+    a: "الاستقالة محتاجة إشعار مسبق ٣٠ يوم، إلا لو عقدك الفردي بينص على مدة مختلفة." },
+];
+const FALLBACK = "معنديش مصدر موثوق في المستندات المرفوعة يجاوب على السؤال ده بدقة، فمش هخمّن. تحب تسأل عن الإجازات، الدوام، التأمين، أو العمل عن بُعد؟";
+const GREETING = "أهلًا 👋 أنا مساعد داخلي بيجاوب من مستندات الشركة فقط (سياسات ودلائل الموارد البشرية)، وبوضح مصدر كل إجابة عشان تقدر تتأكد منها بنفسك.";
+const SUGGESTIONS = ["كام يوم إجازة سنوية؟", "إيه سياسة العمل عن بُعد؟", "التأمين بيغطي مين؟", "الإجازة المرضية كام يوم؟"];
+
+const chat = document.getElementById('chat');
+const form = document.getElementById('form');
+const input = document.getElementById('input');
+const suggBox = document.getElementById('suggestions');
+const kbStrip = document.getElementById('kbStrip');
+
+function renderKbStrip() {
+  const uniq = [...new Set(DOCS.map(d => d.id))];
+  kbStrip.innerHTML = uniq.map(d => `<span class="kb-chip">📄 ${d}</span>`).join('');
+}
+
+function addUserMsg(text) {
+  const row = document.createElement('div');
+  row.className = 'row user';
+  const av = document.createElement('div'); av.className = 'avatar'; av.textContent = 'أ';
+  const col = document.createElement('div'); col.className = 'col';
+  const el = document.createElement('div'); el.className = 'msg user'; el.textContent = text;
+  col.appendChild(el);
+  row.appendChild(av); row.appendChild(col);
+  chat.appendChild(row);
+  chat.scrollTop = chat.scrollHeight;
+}
+
+function addBotMsg(text, source) {
+  const row = document.createElement('div');
+  row.className = 'row bot';
+  const av = document.createElement('div'); av.className = 'avatar'; av.textContent = 'RAG';
+  const col = document.createElement('div'); col.className = 'col';
+  const el = document.createElement('div'); el.className = 'msg bot'; el.textContent = text;
+  col.appendChild(el);
+  if (source) {
+    const card = document.createElement('div');
+    card.className = 'source-card';
+    card.innerHTML = `<div class="label">📎 المصدر المسترجع: ${source.id} — ${source.section}</div><div class="snippet">"${source.snippet}"</div>`;
+    col.appendChild(card);
+  }
+  row.appendChild(av); row.appendChild(col);
+  chat.appendChild(row);
+  chat.scrollTop = chat.scrollHeight;
+}
+
+function showTyping() {
+  const row = document.createElement('div');
+  row.className = 'row bot'; row.id = 'typingRow';
+  const av = document.createElement('div'); av.className = 'avatar'; av.textContent = 'RAG';
+  const col = document.createElement('div'); col.className = 'col';
+  const el = document.createElement('div'); el.className = 'msg bot typing';
+  el.innerHTML = '<span></span><span></span><span></span>';
+  col.appendChild(el);
+  row.appendChild(av); row.appendChild(col);
+  chat.appendChild(row);
+  chat.scrollTop = chat.scrollHeight;
+}
+function hideTyping() { const t = document.getElementById('typingRow'); if (t) t.remove(); }
+
+function retrieve(q) {
+  for (const doc of DOCS) { if (doc.keys.some(k => q.includes(k))) return doc; }
+  return null;
+}
+
+function renderSuggestions(list) {
+  suggBox.innerHTML = '';
+  list.forEach(s => {
+    const c = document.createElement('div');
+    c.className = 'chip'; c.textContent = s;
+    c.onclick = () => { input.value = s; form.dispatchEvent(new Event('submit')); };
+    suggBox.appendChild(c);
+  });
+}
+
+form.addEventListener('submit', (e) => {
+  e.preventDefault();
+  const q = input.value.trim();
+  if (!q) return;
+  addUserMsg(q);
+  input.value = '';
+  showTyping();
+  setTimeout(() => {
+    hideTyping();
+    const doc = retrieve(q);
+    if (doc) addBotMsg(doc.a, doc);
+    else addBotMsg(FALLBACK, null);
+  }, 750);
+});
+
+renderKbStrip();
+addBotMsg(GREETING, null);
+renderSuggestions(SUGGESTIONS);
+</script>
+</body>
+</html>
